@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .                      # project root — Dockerfile uses backend/* paths
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env                  # copy backend/.env.example → backend/.env first
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend             # frontend/ is the build context
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000   # browser hits backend directly
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy

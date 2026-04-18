@@ -1,0 +1,6 @@
+aws_region       = "ap-southeast-1"
+project_name     = "hr-onboarding"
+environment      = "production"
+sender_email     = "hr@yourcompany.com"
+frontend_url     = "http://localhost:3000"
+bedrock_model_id = "anthropic.claude-sonnet-4-5-20250929-v1:0"

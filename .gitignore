@@ -1,0 +1,50 @@
+# ─── Terraform ───────────────────────────────────────────────────────────────
+infrastructure/.terraform/
+infrastructure/*.tfstate
+infrastructure/*.tfstate.backup
+infrastructure/.terraform.lock.hcl
+infrastructure/modules/lambda/files/
+infrastructure/terraform.tfvars        # contains real values — never commit
+
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+*.pyc
+
+# ─── Environment / secrets ───────────────────────────────────────────────────
+.env
+*.env
+!*.env.example                         # keep example files
+
+# ─── Node / Frontend ─────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ─── Docker ──────────────────────────────────────────────────────────────────
+*.log
+
+# ─── AI tooling (Claude, Gemini, etc.) ──────────────────────────────────────
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.code-review-graph/
+.kiro/
+.mcp.json
+.opencode.json
+.windsurfrules
+.cursorrules
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE ─────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
