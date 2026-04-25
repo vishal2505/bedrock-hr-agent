@@ -97,6 +97,20 @@ module "bedrock" {
   log_task_lambda_arn   = module.lambda.log_task_arn
 }
 
+# --- Backend Hosting (ECR + App Runner) ---
+module "apprunner" {
+  source = "./modules/apprunner"
+
+  project_name           = var.project_name
+  tags                   = var.tags
+  enable                 = var.enable_backend_service
+  app_backend_policy_arn = module.iam.app_backend_policy_arn
+  agent_id               = module.bedrock.agent_id
+  agent_alias_id         = module.bedrock.agent_alias_id
+  dynamodb_table_name    = module.dynamodb.table_name
+  frontend_url           = "http://${module.s3.frontend_website_endpoint}"
+}
+
 # --- Observability ---
 module "cloudwatch" {
   source = "./modules/cloudwatch"

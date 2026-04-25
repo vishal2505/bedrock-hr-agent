@@ -39,6 +39,12 @@ variable "embedding_model_id" {
   default     = "amazon.titan-embed-text-v2:0"
 }
 
+variable "enable_backend_service" {
+  description = "Whether to create the App Runner backend service. Set false on first apply (so ECR exists), true on second apply after the image has been pushed."
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)

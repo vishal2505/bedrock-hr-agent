@@ -48,3 +48,18 @@ output "app_backend_policy_arn" {
   description = "Attach this managed policy to the IAM user whose credentials are in backend/.env"
   value       = module.iam.app_backend_policy_arn
 }
+
+output "ecr_repository_url" {
+  description = "ECR repository URL — backend Docker image is pushed here"
+  value       = module.apprunner.ecr_repository_url
+}
+
+output "backend_url" {
+  description = "Public HTTPS URL of the backend App Runner service"
+  value       = module.apprunner.service_url
+}
+
+output "backend_service_arn" {
+  description = "App Runner service ARN"
+  value       = module.apprunner.service_arn
+}
