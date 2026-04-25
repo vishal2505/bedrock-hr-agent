@@ -1,11 +1,7 @@
 name: Terraform Apply
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'infrastructure/**'
-      - 'lambdas/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
