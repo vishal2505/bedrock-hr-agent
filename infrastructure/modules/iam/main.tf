@@ -38,9 +38,20 @@ resource "aws_iam_role_policy" "bedrock_agent" {
         Effect = "Allow"
         Action = [
           "bedrock:InvokeModel",
-          "bedrock:InvokeModelWithResponseStream"
+          "bedrock:InvokeModelWithResponseStream",
+          "bedrock:GetInferenceProfile"
         ]
-        Resource = "arn:aws:bedrock:${data.aws_region.current.id}::foundation-model/${var.bedrock_model_id}"
+        # Allow direct foundation model calls and both inference profile types.
+        Resource = [
+          "arn:aws:bedrock:${data.aws_region.current.id}::foundation-model/${var.bedrock_model_id}",
+          "arn:aws:bedrock:*::foundation-model/${var.bedrock_model_id}",
+          "arn:aws:bedrock:${data.aws_region.current.id}::foundation-model/*",
+          "arn:aws:bedrock:*::foundation-model/*",
+          "arn:aws:bedrock:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:inference-profile/*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:inference-profile/*",
+          "arn:aws:bedrock:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:application-inference-profile/*",
+          "arn:aws:bedrock:*:${data.aws_caller_identity.current.account_id}:application-inference-profile/*"
+        ]
       },
       {
         Effect = "Allow"
@@ -106,6 +117,14 @@ resource "aws_iam_role_policy" "knowledge_base" {
           "bedrock:InvokeModel"
         ]
         Resource = "arn:aws:bedrock:${data.aws_region.current.id}::foundation-model/${var.embedding_model_id}"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe"
+        ]
+        Resource = "*"
       },
       {
         Effect = "Allow"
@@ -231,4 +250,40 @@ resource "aws_iam_role_policy" "lambda_log_task" {
       }
     ]
   })
+}
+
+# --- App Backend Policy ---
+# Attach this to the IAM user whose credentials are in backend/.env
+# so the application can invoke the agent and access DynamoDB.
+resource "aws_iam_policy" "app_backend" {
+  name        = "${var.project_name}-app-backend-policy"
+  description = "Allows the HR agent backend app to invoke the Bedrock agent and access DynamoDB"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "bedrock-agent-runtime:InvokeAgent",
+          "bedrock-agent-runtime:InvokeAgentWithResponseStream"
+        ]
+        Resource = "arn:aws:bedrock:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:agent-alias/*/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
+        Resource = var.dynamodb_table_arn
+      }
+    ]
+  })
+
+  tags = var.tags
 }

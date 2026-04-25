@@ -1,6 +1,6 @@
 # --- Knowledge Base Documents Bucket ---
 resource "aws_s3_bucket" "hr_documents" {
-  bucket = "${var.project_name}-documents-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  bucket = "${var.project_name}-agent-documents-${var.environment}-${data.aws_caller_identity.current.account_id}"
 
   tags = var.tags
 }
@@ -34,7 +34,7 @@ resource "aws_s3_bucket_public_access_block" "hr_documents" {
 
 # --- Frontend Hosting Bucket ---
 resource "aws_s3_bucket" "frontend" {
-  bucket = "${var.project_name}-frontend-${var.environment}-${data.aws_caller_identity.current.account_id}"
+  bucket = "${var.project_name}-agent-frontend-${var.environment}-${data.aws_caller_identity.current.account_id}"
 
   tags = var.tags
 }
@@ -80,19 +80,19 @@ resource "aws_s3_bucket_policy" "frontend" {
 }
 
 # --- Terraform State Bucket (optional) ---
-resource "aws_s3_bucket" "terraform_state" {
-  bucket = "${var.project_name}-terraform-state-${data.aws_caller_identity.current.account_id}"
+# resource "aws_s3_bucket" "terraform_state" {
+#   bucket = "${var.project_name}-terraform-state-${data.aws_caller_identity.current.account_id}"
 
-  tags = var.tags
-}
+#   tags = var.tags
+# }
 
-resource "aws_s3_bucket_versioning" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
+# resource "aws_s3_bucket_versioning" "terraform_state" {
+#   bucket = aws_s3_bucket.terraform_state.id
 
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
+#   versioning_configuration {
+#     status = "Enabled"
+#   }
+# }
 
 # --- Data Lookups ---
 data "aws_caller_identity" "current" {}

@@ -35,6 +35,11 @@ variable "vector_bucket_arn" {
   type        = string
 }
 
+variable "vector_index_name" {
+  description = "Name of the S3 Vectors index (must exist before KB is created)"
+  type        = string
+}
+
 variable "send_email_lambda_arn" {
   type = string
 }

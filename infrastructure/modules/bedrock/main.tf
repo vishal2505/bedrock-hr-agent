@@ -33,7 +33,7 @@ resource "aws_bedrock_guardrail" "hr_agent" {
     }
     filters_config {
       input_strength  = "HIGH"
-      output_strength = "HIGH"
+      output_strength = "NONE"  # AWS restriction: PROMPT_ATTACK output must be NONE
       type            = "PROMPT_ATTACK"
     }
   }
@@ -103,7 +103,7 @@ resource "aws_bedrockagent_knowledge_base" "hr_policies" {
 
     s3_vectors_configuration {
       vector_bucket_arn = var.vector_bucket_arn
-      index_name        = "${var.project_name}-kb-index"
+      index_name        = var.vector_index_name
     }
   }
 
@@ -119,6 +119,20 @@ resource "aws_bedrockagent_data_source" "hr_documents" {
 
     s3_configuration {
       bucket_arn = var.documents_bucket_arn
+    }
+  }
+
+  # S3 Vectors has a 2048-byte limit on filterable metadata per vector.
+  # Bedrock stores chunk text + source metadata in that field, so chunks
+  # must be small enough to stay under the limit.
+  vector_ingestion_configuration {
+    chunking_configuration {
+      chunking_strategy = "FIXED_SIZE"
+
+      fixed_size_chunking_configuration {
+        max_tokens         = 200
+        overlap_percentage = 10
+      }
     }
   }
 }
@@ -246,10 +260,18 @@ resource "aws_bedrockagent_agent_action_group" "log_task" {
 }
 
 # --- Agent Alias ---
+# Must be created LAST — alias creation puts the agent into Versioning state,
+# which blocks PrepareAgent calls from action groups and KB associations.
 resource "aws_bedrockagent_agent_alias" "production" {
   agent_id         = aws_bedrockagent_agent.hr_agent.agent_id
   agent_alias_name = "production"
   description      = "Production alias for the HR onboarding agent"
 
   tags = var.tags
+
+  depends_on = [
+    aws_bedrockagent_agent_knowledge_base_association.hr_policies,
+    aws_bedrockagent_agent_action_group.send_email,
+    aws_bedrockagent_agent_action_group.log_task,
+  ]
 }

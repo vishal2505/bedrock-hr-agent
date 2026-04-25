@@ -8,7 +8,7 @@ import boto3
 
 AGENT_ID = os.getenv("BEDROCK_AGENT_ID", "")
 AGENT_ALIAS_ID = os.getenv("BEDROCK_AGENT_ALIAS_ID", "")
-AWS_REGION = os.getenv("AWS_REGION", "ap-southeast-1")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 
 client = boto3.client("bedrock-agent-runtime", region_name=AWS_REGION)
 
@@ -44,6 +44,11 @@ def invoke_agent_streaming(
         sources: list[str] = []
 
         for event in response.get("completion", []):
+            # DEBUG: Log trace events so we can see internal agent failures
+            if "trace" in event:
+                import json
+                print(f"[TRACE] {json.dumps(event['trace'], default=str)[:2000]}", flush=True)
+
             if "chunk" in event:
                 chunk_data = event["chunk"]
                 text = chunk_data.get("bytes", b"").decode("utf-8")

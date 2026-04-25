@@ -13,9 +13,9 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "hr-onboarding-terraform-state"
+    bucket = "hr-onboarding-agent-terraform-state"
     key    = "terraform.tfstate"
-    region = "ap-southeast-1"
+    region = "us-east-1"
   }
 }
 
@@ -83,15 +83,16 @@ module "lambda" {
 module "bedrock" {
   source = "./modules/bedrock"
 
-  project_name         = var.project_name
-  aws_region           = var.aws_region
-  tags                 = var.tags
-  bedrock_model_id     = var.bedrock_model_id
-  embedding_model_id   = var.embedding_model_id
-  agent_role_arn       = module.iam.bedrock_agent_role_arn
-  kb_role_arn          = module.iam.knowledge_base_role_arn
-  documents_bucket_arn = module.s3.documents_bucket_arn
-  vector_bucket_arn    = module.s3vectors.vector_bucket_arn
+  project_name          = var.project_name
+  aws_region            = var.aws_region
+  tags                  = var.tags
+  bedrock_model_id      = var.bedrock_model_id
+  embedding_model_id    = var.embedding_model_id
+  agent_role_arn        = module.iam.bedrock_agent_role_arn
+  kb_role_arn           = module.iam.knowledge_base_role_arn
+  documents_bucket_arn  = module.s3.documents_bucket_arn
+  vector_bucket_arn     = module.s3vectors.vector_bucket_arn
+  vector_index_name     = module.s3vectors.index_name
   send_email_lambda_arn = module.lambda.send_email_arn
   log_task_lambda_arn   = module.lambda.log_task_arn
 }

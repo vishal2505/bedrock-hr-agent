@@ -43,3 +43,8 @@ output "cloudwatch_dashboard" {
   description = "CloudWatch dashboard name"
   value       = "${var.project_name}-dashboard"
 }
+
+output "app_backend_policy_arn" {
+  description = "Attach this managed policy to the IAM user whose credentials are in backend/.env"
+  value       = module.iam.app_backend_policy_arn
+}

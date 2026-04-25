@@ -1,5 +1,0 @@
-aws_region     = "ap-southeast-1"
-project_name   = "hr-onboarding"
-environment    = "production"
-sender_email   = "vishal.mishra2505@gmail.com"
-frontend_url   = "http://localhost:3000"

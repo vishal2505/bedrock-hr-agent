@@ -80,11 +80,6 @@ A production-ready HR Onboarding AI Agent powered by **Amazon Bedrock**, with a 
 
 ## Getting Started
 
-> ⚠️ **You must deploy the AWS infrastructure first.**
-> The backend connects to real AWS services (DynamoDB, Bedrock Agent).
-> Docker Compose will start without them but API calls will fail.
-> Follow **Part 1** completely before running **Part 2**.
-
 ---
 
 ## Part 1 — Deploy AWS Infrastructure (Terraform)
@@ -94,7 +89,7 @@ A production-ready HR Onboarding AI Agent powered by **Amazon Bedrock**, with a 
 This only needs to be done once, ever.
 
 ```bash
-aws s3 mb s3://hr-onboarding-terraform-state --region ap-southeast-1
+aws s3 mb s3://hr-onboarding-agent-terraform-state --region us-east-1
 ```
 
 ### Step 2 — Set your Terraform variables
@@ -107,7 +102,7 @@ cp terraform.tfvars.example terraform.tfvars
 Edit `terraform.tfvars` with your values:
 
 ```hcl
-aws_region   = "ap-southeast-1"
+aws_region   = "us-east-1"
 project_name = "hr-onboarding"
 environment  = "production"
 sender_email = "hr@yourcompany.com"   # must be an email you own
@@ -120,8 +115,6 @@ terraform init
 terraform plan    # review what will be created
 terraform apply   # type 'yes' to confirm
 ```
-
-> ⏱ This takes **10–15 minutes** — OpenSearch Serverless is the slowest resource.
 
 When complete, Terraform prints the outputs you need:
 
@@ -167,6 +160,43 @@ aws bedrock-agent start-ingestion-job \
   --data-source-id <open AWS Console → Bedrock → Knowledge Bases → your KB → Data source ID>
 ```
 
+Or use the CLI to look up the data source ID and start ingestion:
+
+```bash
+cd infrastructure
+KB_ID=$(terraform output -raw knowledge_base_id)
+
+# Get the data source ID
+DS_ID=$(aws bedrock-agent list-data-sources \
+  --knowledge-base-id ${KB_ID} \
+  --region us-east-1 \
+  --query 'dataSourceSummaries[0].dataSourceId' \
+  --output text)
+
+# Start ingestion
+aws bedrock-agent start-ingestion-job \
+  --knowledge-base-id ${KB_ID} \
+  --data-source-id ${DS_ID} \
+  --region us-east-1
+
+# To check status
+aws bedrock-agent list-ingestion-jobs \
+  --knowledge-base-id THCV5FBXEF \
+  --data-source-id SHLLEPHHUT \
+  --region us-east-1 \
+  --query 'ingestionJobSummaries[0]' \
+  --output json
+
+# To Check Failed job info =>
+
+aws bedrock-agent get-ingestion-job \
+  --knowledge-base-id THCV5FBXEF \
+  --data-source-id SHLLEPHHUT \
+  --ingestion-job-id DS0SMJIBJL \
+  --region us-east-1 \
+  --output json
+```
+
 > You can also trigger this from the AWS Console: **Amazon Bedrock → Knowledge Bases → your KB → Sync**.
 
 ---
@@ -185,7 +215,7 @@ cp backend/.env.example backend/.env
 Open `backend/.env` and fill in the values from the Terraform output:
 
 ```env
-AWS_REGION=ap-southeast-1
+AWS_REGION=us-east-1
 BEDROCK_AGENT_ID=ABCD1234EF               # from terraform output
 BEDROCK_AGENT_ALIAS_ID=TSTALIASID         # from terraform output
 DYNAMODB_TABLE_NAME=OnboardingTasks
@@ -296,7 +326,7 @@ curl -X PATCH http://localhost:8000/api/tasks/<task_id> \
 
 | Variable                 | Description                     | Default                 |
 |--------------------------|---------------------------------|-------------------------|
-| `AWS_REGION`             | AWS region                      | `ap-southeast-1`        |
+| `AWS_REGION`             | AWS region                      | `us-east-1`             |
 | `BEDROCK_AGENT_ID`       | Bedrock Agent ID                | —                       |
 | `BEDROCK_AGENT_ALIAS_ID` | Bedrock Agent Alias ID          | —                       |
 | `DYNAMODB_TABLE_NAME`    | DynamoDB table name             | `OnboardingTasks`       |
@@ -322,14 +352,52 @@ curl -X PATCH http://localhost:8000/api/tasks/<task_id> \
 - In SES sandbox mode, the *recipient* email must also be verified
 - To send to anyone: request SES production access in the AWS Console
 
-**4. OpenSearch collection creation times out during `terraform apply`**
-- This is normal — collections take 5–10 minutes to become `ACTIVE`
-- Just re-run `terraform apply` — it is always safe to re-run
+**4. Knowledge Base ingestion job fails — `numberOfDocumentsFailed: 3`**
 
-**5. `terraform init` fails with "bucket does not exist"**
-- Create the state bucket first: `aws s3 mb s3://hr-onboarding-terraform-state --region ap-southeast-1`
+Get the exact failure reason:
+```bash
+aws bedrock-agent get-ingestion-job \
+  --knowledge-base-id <KB_ID> \
+  --data-source-id <DS_ID> \
+  --ingestion-job-id <JOB_ID> \
+  --region us-east-1 \
+  --query 'ingestionJob.failureReasons'
+```
+
+*S3 Vectors metadata size limit* — if the error is:
+```
+Filterable metadata must have at most 2048 bytes (Service: S3Vectors, Status Code: 400)
+```
+Bedrock stores each chunk's text + source metadata as filterable metadata in S3 Vectors, which has a hard 2048-byte cap. Fix: ensure the data source has `vector_ingestion_configuration` with small fixed-size chunks (≤ 200 tokens). This is already configured in `infrastructure/modules/bedrock/main.tf`. If you modified chunking settings and broke this, restore:
+```hcl
+vector_ingestion_configuration {
+  chunking_configuration {
+    chunking_strategy = "FIXED_SIZE"
+    fixed_size_chunking_configuration {
+      max_tokens         = 200
+      overlap_percentage = 10
+    }
+  }
+}
+```
+Then run `terraform apply -target=module.bedrock.aws_bedrockagent_data_source.hr_documents` and re-trigger ingestion.
+
+**5. Bedrock embedding model not available in your region**
+- Titan Embeddings V2 (`amazon.titan-embed-text-v2:0`) and Claude Sonnet are not available in all regions
+- Use `us-east-1` — all required models are available there
+- Update `default` in `infrastructure/variables.tf` and the `backend` block region in `infrastructure/main.tf`
+- Update `AWS_REGION=us-east-1` in `backend/.env`
+
+**6. `terraform init` fails with "bucket does not exist"**
+- Create the state bucket first: `aws s3 mb s3://hr-onboarding-agent-terraform-state --region us-east-1`
 - The bucket name in the `backend` block in `infrastructure/main.tf` must match exactly
 
-**6. `docker compose up` starts but chat doesn't work**
+**7. `docker compose up` starts but chat doesn't work**
 - This means the infrastructure is not deployed yet, or `.env` has wrong/missing values
 - Complete Part 1 (Terraform) first, then copy the outputs into `backend/.env`
+
+**8. Agent in `Versioning` state error during `terraform apply`**
+```
+ValidationException: Prepare operation can't be performed on Agent when it is in Versioning state.
+```
+This happens if the agent alias is created before action groups and the Knowledge Base association are fully applied. The alias creation triggers a versioning cycle that blocks `PrepareAgent` calls. The `aws_bedrockagent_agent_alias` resource has `depends_on` to prevent this — if you see it, just re-run `terraform apply`. It is always safe to re-run.

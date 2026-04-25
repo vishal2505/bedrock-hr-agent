@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from moto import mock_aws
 
-os.environ["AWS_DEFAULT_REGION"] = "ap-southeast-1"
+os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 os.environ["AWS_ACCESS_KEY_ID"] = "testing"
 os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
 os.environ["DYNAMODB_TABLE_NAME"] = "OnboardingTasks"
@@ -32,7 +32,7 @@ def test_health_check():
 @mock_aws
 def setup_dynamodb():
     """Create a mock DynamoDB table."""
-    dynamodb = boto3.resource("dynamodb", region_name="ap-southeast-1")
+    dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
     table = dynamodb.create_table(
         TableName="OnboardingTasks",
         KeySchema=[{"AttributeName": "task_id", "KeyType": "HASH"}],

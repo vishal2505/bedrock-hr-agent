@@ -10,7 +10,7 @@ services:
     env_file:
       - backend/.env                  # copy backend/.env.example → backend/.env first
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 15s
       timeout: 5s
       retries: 3

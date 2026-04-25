@@ -5,6 +5,7 @@ infrastructure/*.tfstate.backup
 infrastructure/.terraform.lock.hcl
 infrastructure/modules/lambda/files/
 infrastructure/terraform.tfvars        # contains real values — never commit
+terraform.tfstate
 
 # ─── Python ──────────────────────────────────────────────────────────────────
 __pycache__/

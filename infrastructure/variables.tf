@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
-  default     = "ap-southeast-1"
+  default     = "us-east-1"
 }
 
 variable "project_name" {
@@ -30,7 +30,7 @@ variable "frontend_url" {
 variable "bedrock_model_id" {
   description = "Bedrock foundation model ID for the agent"
   type        = string
-  default     = "anthropic.claude-sonnet-4-5-20250929-v1:0"
+  default     = "amazon.nova-2-lite-v1:0"
 }
 
 variable "embedding_model_id" {
