@@ -1,12 +1,14 @@
-name: Terraform Destroy
+name: Destroy Infrastructure
 
+# Manual-only. Tears down ALL AWS resources managed by Terraform.
+# Requires typing DESTROY in the confirmation input as a safety check.
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "Type DESTROY to confirm"
+        description: 'Type DESTROY to confirm (case-sensitive)'
         required: true
-        default: ""
+        default: ''
 
 permissions:
   contents: read
@@ -15,7 +17,7 @@ jobs:
   terraform-destroy:
     name: Terraform Destroy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event.inputs.confirm == 'DESTROY'
+    if: github.event.inputs.confirm == 'DESTROY'
     defaults:
       run:
         working-directory: infrastructure
