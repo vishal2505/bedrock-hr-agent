@@ -197,7 +197,19 @@ aws bedrock-agent get-ingestion-job \
   --output json
 ```
 
-> You can also trigger this from the AWS Console: **Amazon Bedrock → Knowledge Bases → your KB → Sync**.
+#### Sync from the AWS Console (manual)
+
+The Knowledge Base does **not** auto-sync when documents are added/removed in S3 — you must trigger ingestion every time the document set changes. To sync from the console:
+
+1. Open the AWS Console → **Amazon Bedrock** (region: `us-east-1`).
+2. In the left sidebar, click **Knowledge Bases**.
+3. Click your knowledge base (e.g. `hr-onboarding-agent-kb`).
+4. Scroll down to the **Data source** section and select the row (e.g. `hr-onboarding-agent-documents`).
+5. Click the **Sync** button in the top-right of the data source panel.
+6. Wait for the **Status** to change from `Syncing` → `Available` (typically 1–3 minutes for a few PDFs).
+7. If a sync fails, click the job ID to see the failure reason (most common cause: the S3 Vectors 2048-byte filterable-metadata limit — see the Troubleshooting section).
+
+After the sync completes, the agent can answer questions from the new documents immediately. Re-run the sync any time you upload, update, or delete files in the documents bucket.
 
 ---
 
