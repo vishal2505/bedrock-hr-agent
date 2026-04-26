@@ -262,6 +262,18 @@ resource "aws_bedrockagent_agent_action_group" "log_task" {
   }
 }
 
+# --- Built-in Action Group: User Input ---
+# Lets the agent ask the user follow-up questions when required
+# parameters (e.g., task title, due date) are missing from the prompt.
+resource "aws_bedrockagent_agent_action_group" "user_input" {
+  agent_id                     = aws_bedrockagent_agent.hr_agent.agent_id
+  agent_version                = "DRAFT"
+  action_group_name            = "UserInputAction"
+  parent_action_group_signature = "AMAZON.UserInput"
+  action_group_state           = "ENABLED"
+  skip_resource_in_use_check   = true
+}
+
 # --- Agent Alias ---
 # Must be created LAST — alias creation puts the agent into Versioning state,
 # which blocks PrepareAgent calls from action groups and KB associations.
@@ -276,5 +288,6 @@ resource "aws_bedrockagent_agent_alias" "production" {
     aws_bedrockagent_agent_knowledge_base_association.hr_policies,
     aws_bedrockagent_agent_action_group.send_email,
     aws_bedrockagent_agent_action_group.log_task,
+    aws_bedrockagent_agent_action_group.user_input,
   ]
 }
