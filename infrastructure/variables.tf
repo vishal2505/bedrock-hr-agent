@@ -30,7 +30,7 @@ variable "frontend_url" {
 variable "bedrock_model_id" {
   description = "Bedrock foundation model ID for the agent"
   type        = string
-  default     = "us.amazon.amazon.nova-pro-v1:0"
+  default     = "us.amazon.nova-pro-v1:0"
 }
 
 variable "embedding_model_id" {
