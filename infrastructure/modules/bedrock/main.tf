@@ -176,6 +176,8 @@ resource "aws_bedrockagent_agent_action_group" "send_email" {
   agent_id                     = aws_bedrockagent_agent.hr_agent.agent_id
   agent_version                = "DRAFT"
   action_group_name            = "SendWelcomeEmail"
+  # Allow terraform destroy to delete the action group even when it's enabled
+  skip_resource_in_use_check   = true
   action_group_executor {
     lambda = var.send_email_lambda_arn
   }
@@ -216,6 +218,7 @@ resource "aws_bedrockagent_agent_action_group" "log_task" {
   agent_id                     = aws_bedrockagent_agent.hr_agent.agent_id
   agent_version                = "DRAFT"
   action_group_name            = "LogOnboardingTask"
+  skip_resource_in_use_check   = true
   action_group_executor {
     lambda = var.log_task_lambda_arn
   }

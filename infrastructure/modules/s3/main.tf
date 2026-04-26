@@ -2,6 +2,10 @@
 resource "aws_s3_bucket" "hr_documents" {
   bucket = "${var.project_name}-agent-documents-${var.environment}-${data.aws_caller_identity.current.account_id}"
 
+  # Allow terraform destroy to delete the bucket even when it contains
+  # versioned objects. Without this, destroy fails with BucketNotEmpty.
+  force_destroy = true
+
   tags = var.tags
 }
 
@@ -35,6 +39,8 @@ resource "aws_s3_bucket_public_access_block" "hr_documents" {
 # --- Frontend Hosting Bucket ---
 resource "aws_s3_bucket" "frontend" {
   bucket = "${var.project_name}-agent-frontend-${var.environment}-${data.aws_caller_identity.current.account_id}"
+
+  force_destroy = true
 
   tags = var.tags
 }
