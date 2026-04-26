@@ -265,8 +265,7 @@ resource "aws_iam_policy" "app_backend" {
       {
         Effect = "Allow"
         Action = [
-          "bedrock-agent-runtime:InvokeAgent",
-          "bedrock-agent-runtime:InvokeAgentWithResponseStream"
+          "bedrock:InvokeAgent"
         ]
         Resource = "arn:aws:bedrock:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:agent-alias/*/*"
       },
